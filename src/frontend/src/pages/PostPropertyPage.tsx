@@ -10,14 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "@tanstack/react-router";
-import { Building2, Check, IndianRupee, Loader2 } from "lucide-react";
+import {
+  Building2,
+  Check,
+  CreditCard,
+  IndianRupee,
+  Loader2,
+  SkipForward,
+  Sparkles,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, type PropertyType } from "../backend.d";
 import PhotoUploader from "../components/PhotoUploader";
+import { useCreateCheckoutSession } from "../hooks/useCheckout";
 import { useCreateProperty } from "../hooks/useQueries";
 import {
   INDIAN_CITIES,
@@ -49,6 +59,8 @@ interface FormErrors {
 export default function PostPropertyPage() {
   const router = useRouter();
   const { mutateAsync: createProperty, isPending } = useCreateProperty();
+  const { mutateAsync: createCheckoutSession, isPending: isCheckoutPending } =
+    useCreateCheckoutSession();
 
   const [form, setForm] = useState<FormData>({
     title: "",
@@ -68,7 +80,10 @@ export default function PostPropertyPage() {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [createdPropertyId, setCreatedPropertyId] = useState<bigint | null>(
+    null,
+  );
+  const [showPayment, setShowPayment] = useState(false);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -147,36 +162,170 @@ export default function PostPropertyPage() {
         contactPhone: form.contactPhone,
         photoUrls: form.photoUrls,
       });
-      setSubmitted(true);
-      toast.success("Property listed successfully!");
-      setTimeout(() => {
-        router.navigate({ to: `/property/${id}` } as never);
-      }, 1500);
+      setCreatedPropertyId(id);
+      setShowPayment(true);
+      toast.success("Property saved! Complete payment to publish.");
     } catch (err) {
       console.error(err);
       toast.error("Failed to post property. Please try again.");
     }
   }
 
-  if (submitted) {
+  async function handlePayNow() {
+    try {
+      const session = await createCheckoutSession({
+        items: [
+          {
+            productName: "Property Listing Fee",
+            currency: "inr",
+            quantity: 1n,
+            priceInCents: 99900n,
+            productDescription: "FS Realty - Publish your property listing",
+          },
+        ],
+        successUrl: `${window.location.origin}/payment-success`,
+        cancelUrl: `${window.location.origin}/payment-cancelled`,
+      });
+      window.location.href = session.url;
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Payment failed. Please try again.",
+      );
+    }
+  }
+
+  function handleSkipPayment() {
+    if (createdPropertyId !== null) {
+      router.navigate({ to: `/property/${createdPropertyId}` } as never);
+    }
+  }
+
+  if (showPayment && createdPropertyId !== null) {
     return (
-      <div
-        className="container mx-auto px-4 py-20 max-w-md text-center"
-        data-ocid="post.success_state"
-      >
+      <div className="container mx-auto px-4 py-20 max-w-lg">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          initial={{ scale: 0.9, opacity: 0, y: 16 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
           className="space-y-6"
+          data-ocid="post.success_state"
         >
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-            <Check className="w-10 h-10 text-green-600" />
+          {/* Success step indicator */}
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+              <Check className="w-5 h-5 text-green-600" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">
+              Property saved
+            </span>
+            <div className="w-8 h-0.5 bg-border" />
+            <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center ring-2 ring-brand">
+              <CreditCard className="w-5 h-5 text-brand" />
+            </div>
+            <span className="text-sm font-semibold text-foreground">
+              Pay to publish
+            </span>
           </div>
-          <h2 className="font-heading text-2xl font-extrabold text-foreground">
-            Property Listed!
-          </h2>
-          <p className="text-muted-foreground">
-            Your property has been posted successfully. Redirecting...
+
+          {/* Payment card */}
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+            {/* Banner */}
+            <div className="bg-brand px-6 py-5 relative overflow-hidden">
+              <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)",
+                }}
+              />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-1">
+                    Listing Fee
+                  </p>
+                  <p className="text-white font-heading font-extrabold text-3xl tracking-tight">
+                    ₹999
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <h2 className="font-heading text-xl font-extrabold text-foreground mb-1">
+                  Pay to Publish Your Property
+                </h2>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Your property details have been saved. Complete the one-time
+                  listing fee to make it live and visible to potential buyers
+                  and renters.
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* What you get */}
+              <ul className="space-y-2">
+                {[
+                  "Listing live for 90 days",
+                  "Visible to thousands of buyers & renters",
+                  "Direct contact from interested parties",
+                  "Featured on search results",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 text-sm text-foreground"
+                  >
+                    <div className="w-4 h-4 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
+                      <Check className="w-2.5 h-2.5 text-brand" />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <Separator />
+
+              <div className="space-y-3 pt-1">
+                <Button
+                  data-ocid="payment.pay_button"
+                  onClick={handlePayNow}
+                  disabled={isCheckoutPending}
+                  className="w-full bg-brand hover:bg-brand-dark text-white font-semibold h-12 text-base shadow-brand gap-2"
+                >
+                  {isCheckoutPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting to payment...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      Pay ₹999 &amp; Publish Now
+                    </>
+                  )}
+                </Button>
+                <Button
+                  data-ocid="payment.skip_button"
+                  variant="ghost"
+                  onClick={handleSkipPayment}
+                  className="w-full gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  Skip Payment (Demo)
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Secured by Stripe · 256-bit SSL encryption
           </p>
         </motion.div>
       </div>

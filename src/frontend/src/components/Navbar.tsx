@@ -3,11 +3,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Building2, LogIn, LogOut, Menu, Plus, User, X } from "lucide-react";
+import {
+  Building2,
+  LogIn,
+  LogOut,
+  Menu,
+  Plus,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
 import { useState } from "react";
+import { useIsCallerAdmin } from "../hooks/useCheckout";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 export default function Navbar() {
@@ -16,6 +27,7 @@ export default function Navbar() {
   const isAuthenticated = !!identity;
   const isLoggingIn = loginStatus === "logging-in";
   const router = useRouter();
+  const { data: isAdmin } = useIsCallerAdmin();
 
   const navLinks = [
     { label: "Buy", href: "/listings?type=buy", ocid: "nav.buy_link" },
@@ -91,10 +103,27 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="/my-listings" className="cursor-pointer">
+                    <Link
+                      to="/my-listings"
+                      className="cursor-pointer"
+                      data-ocid="nav.my_listings_link"
+                    >
                       My Listings
                     </Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/admin"
+                        className="cursor-pointer"
+                        data-ocid="nav.admin_link"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Admin Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={clear}
                     className="text-destructive cursor-pointer"
@@ -182,6 +211,7 @@ export default function Navbar() {
                   <Link
                     to="/my-listings"
                     onClick={() => setMobileMenuOpen(false)}
+                    data-ocid="nav.my_listings_link"
                   >
                     <Button
                       size="sm"
@@ -192,6 +222,22 @@ export default function Navbar() {
                       My Listings
                     </Button>
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setMobileMenuOpen(false)}
+                      data-ocid="nav.admin_link"
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full gap-2"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Admin Settings
+                      </Button>
+                    </Link>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

@@ -10,9 +10,12 @@ import {
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
+import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
 import ListingsPage from "./pages/ListingsPage";
 import MyListingsPage from "./pages/MyListingsPage";
+import PaymentCancelledPage from "./pages/PaymentCancelledPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PostPropertyPage from "./pages/PostPropertyPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 
@@ -121,12 +124,33 @@ const myListingsRoute = createRoute({
   component: MyListingsGuard,
 });
 
+const paymentSuccessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/payment-success",
+  component: PaymentSuccessPage,
+});
+
+const paymentCancelledRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/payment-cancelled",
+  component: PaymentCancelledPage,
+});
+
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   listingsRoute,
   propertyDetailRoute,
   postPropertyRoute,
   myListingsRoute,
+  paymentSuccessRoute,
+  paymentCancelledRoute,
+  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });

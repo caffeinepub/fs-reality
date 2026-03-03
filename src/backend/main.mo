@@ -9,11 +9,13 @@ import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
-
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
+import Stripe "stripe/stripe";
+import OutCall "http-outcalls/outcall";
+import Migration "migration";
 
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -45,7 +47,7 @@ actor {
     contactName : Text;
     contactPhone : Text;
     photoUrls : [Text];
-    postedBy : Principal;
+    postedBy : Principal.Principal;
     postedAt : Time.Time;
     isActive : Bool;
   };
@@ -60,7 +62,42 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  let userProfiles = Map.empty<Principal, UserProfile>();
+  let userProfiles = Map.empty<Principal.Principal, UserProfile>();
+
+  var stripeConfiguration : ?Stripe.StripeConfiguration = null;
+
+  public query ({ caller }) func isStripeConfigured() : async Bool {
+    stripeConfiguration != null;
+  };
+
+  public shared ({ caller }) func setStripeConfiguration(config : Stripe.StripeConfiguration) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+    stripeConfiguration := ?config;
+  };
+
+  func getStripeConfiguration() : Stripe.StripeConfiguration {
+    switch (stripeConfiguration) {
+      case (null) { Runtime.trap("Stripe needs to be first configured") };
+      case (?value) { value };
+    };
+  };
+
+  public shared ({ caller }) func createCheckoutSession(items : [Stripe.ShoppingItem], successUrl : Text, cancelUrl : Text) : async Text {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can create checkout sessions");
+    };
+    await Stripe.createCheckoutSession(getStripeConfiguration(), caller, items, successUrl, cancelUrl, transform);
+  };
+
+  public shared ({ caller }) func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
+    await Stripe.getSessionStatus(getStripeConfiguration(), sessionId, transform);
+  };
+
+  public query func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
+    OutCall.transform(input);
+  };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
@@ -69,7 +106,7 @@ actor {
     userProfiles.get(caller);
   };
 
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+  public query ({ caller }) func getUserProfile(user : Principal.Principal) : async ?UserProfile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };

@@ -12,6 +12,7 @@ import type { Principal } from '@icp-sdk/core/principal';
 
 export type ListingType = { 'buy' : null } |
   { 'rent' : null };
+export type Principal = Principal;
 export interface Property {
   'id' : bigint,
   'title' : string,
@@ -36,7 +37,31 @@ export type PropertyType = { 'commercial' : null } |
   { 'villa' : null } |
   { 'plot' : null } |
   { 'apartment' : null };
+export interface ShoppingItem {
+  'productName' : string,
+  'currency' : string,
+  'quantity' : bigint,
+  'priceInCents' : bigint,
+  'productDescription' : string,
+}
+export interface StripeConfiguration {
+  'allowedCountries' : Array<string>,
+  'secretKey' : string,
+}
+export type StripeSessionStatus = {
+    'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
+  } |
+  { 'failed' : { 'error' : string } };
 export type Time = bigint;
+export interface TransformationInput {
+  'context' : Uint8Array,
+  'response' : http_request_result,
+}
+export interface TransformationOutput {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
+}
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -51,6 +76,12 @@ export interface _CaffeineStorageRefillInformation {
 export interface _CaffeineStorageRefillResult {
   'success' : [] | [boolean],
   'topped_up_amount' : [] | [bigint],
+}
+export interface http_header { 'value' : string, 'name' : string }
+export interface http_request_result {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
 }
 export interface _SERVICE {
   '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
@@ -70,6 +101,10 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createCheckoutSession' : ActorMethod<
+    [Array<ShoppingItem>, string, string],
+    string
+  >,
   'createProperty' : ActorMethod<
     [
       string,
@@ -106,9 +141,13 @@ export interface _SERVICE {
     Array<Property>
   >,
   'getProperty' : ActorMethod<[bigint], [] | [Property]>,
+  'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isStripeConfigured' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
+  'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateProperty' : ActorMethod<
     [
       bigint,

@@ -24,6 +24,13 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const ShoppingItem = IDL.Record({
+  'productName' : IDL.Text,
+  'currency' : IDL.Text,
+  'quantity' : IDL.Nat,
+  'priceInCents' : IDL.Nat,
+  'productDescription' : IDL.Text,
+});
 export const PropertyType = IDL.Variant({
   'commercial' : IDL.Null,
   'villa' : IDL.Null,
@@ -33,12 +40,13 @@ export const PropertyType = IDL.Variant({
 export const ListingType = IDL.Variant({ 'buy' : IDL.Null, 'rent' : IDL.Null });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const Time = IDL.Int;
+export const Principal = IDL.Principal;
 export const Property = IDL.Record({
   'id' : IDL.Nat,
   'title' : IDL.Text,
   'photoUrls' : IDL.Vec(IDL.Text),
   'postedAt' : Time,
-  'postedBy' : IDL.Principal,
+  'postedBy' : Principal,
   'contactName' : IDL.Text,
   'propertyType' : PropertyType,
   'bedrooms' : IDL.Nat,
@@ -52,6 +60,35 @@ export const Property = IDL.Record({
   'price' : IDL.Nat,
   'location' : IDL.Text,
   'contactPhone' : IDL.Text,
+});
+export const StripeSessionStatus = IDL.Variant({
+  'completed' : IDL.Record({
+    'userPrincipal' : IDL.Opt(IDL.Text),
+    'response' : IDL.Text,
+  }),
+  'failed' : IDL.Record({ 'error' : IDL.Text }),
+});
+export const StripeConfiguration = IDL.Record({
+  'allowedCountries' : IDL.Vec(IDL.Text),
+  'secretKey' : IDL.Text,
+});
+export const http_header = IDL.Record({
+  'value' : IDL.Text,
+  'name' : IDL.Text,
+});
+export const http_request_result = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
+});
+export const TransformationInput = IDL.Record({
+  'context' : IDL.Vec(IDL.Nat8),
+  'response' : http_request_result,
+});
+export const TransformationOutput = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
 });
 
 export const idlService = IDL.Service({
@@ -83,6 +120,11 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createCheckoutSession' : IDL.Func(
+      [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
+      [IDL.Text],
+      [],
+    ),
   'createProperty' : IDL.Func(
       [
         IDL.Text,
@@ -121,13 +163,17 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getProperty' : IDL.Func([IDL.Nat], [IDL.Opt(Property)], ['query']),
-  'getUserProfile' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Opt(UserProfile)],
+  'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+  'getUserProfile' : IDL.Func([Principal], [IDL.Opt(UserProfile)], ['query']),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+  'transform' : IDL.Func(
+      [TransformationInput],
+      [TransformationOutput],
       ['query'],
     ),
-  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'updateProperty' : IDL.Func(
       [
         IDL.Nat,
@@ -170,6 +216,13 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const ShoppingItem = IDL.Record({
+    'productName' : IDL.Text,
+    'currency' : IDL.Text,
+    'quantity' : IDL.Nat,
+    'priceInCents' : IDL.Nat,
+    'productDescription' : IDL.Text,
+  });
   const PropertyType = IDL.Variant({
     'commercial' : IDL.Null,
     'villa' : IDL.Null,
@@ -179,12 +232,13 @@ export const idlFactory = ({ IDL }) => {
   const ListingType = IDL.Variant({ 'buy' : IDL.Null, 'rent' : IDL.Null });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const Time = IDL.Int;
+  const Principal = IDL.Principal;
   const Property = IDL.Record({
     'id' : IDL.Nat,
     'title' : IDL.Text,
     'photoUrls' : IDL.Vec(IDL.Text),
     'postedAt' : Time,
-    'postedBy' : IDL.Principal,
+    'postedBy' : Principal,
     'contactName' : IDL.Text,
     'propertyType' : PropertyType,
     'bedrooms' : IDL.Nat,
@@ -198,6 +252,32 @@ export const idlFactory = ({ IDL }) => {
     'price' : IDL.Nat,
     'location' : IDL.Text,
     'contactPhone' : IDL.Text,
+  });
+  const StripeSessionStatus = IDL.Variant({
+    'completed' : IDL.Record({
+      'userPrincipal' : IDL.Opt(IDL.Text),
+      'response' : IDL.Text,
+    }),
+    'failed' : IDL.Record({ 'error' : IDL.Text }),
+  });
+  const StripeConfiguration = IDL.Record({
+    'allowedCountries' : IDL.Vec(IDL.Text),
+    'secretKey' : IDL.Text,
+  });
+  const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
+  const http_request_result = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
+  });
+  const TransformationInput = IDL.Record({
+    'context' : IDL.Vec(IDL.Nat8),
+    'response' : http_request_result,
+  });
+  const TransformationOutput = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
   });
   
   return IDL.Service({
@@ -229,6 +309,11 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createCheckoutSession' : IDL.Func(
+        [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
+        [IDL.Text],
+        [],
+      ),
     'createProperty' : IDL.Func(
         [
           IDL.Text,
@@ -267,13 +352,17 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getProperty' : IDL.Func([IDL.Nat], [IDL.Opt(Property)], ['query']),
-    'getUserProfile' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Opt(UserProfile)],
+    'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+    'getUserProfile' : IDL.Func([Principal], [IDL.Opt(UserProfile)], ['query']),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+    'transform' : IDL.Func(
+        [TransformationInput],
+        [TransformationOutput],
         ['query'],
       ),
-    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updateProperty' : IDL.Func(
         [
           IDL.Nat,

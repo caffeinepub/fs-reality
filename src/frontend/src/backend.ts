@@ -89,6 +89,29 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface TransformationOutput {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export type Time = bigint;
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
+}
+export type Principal = Principal;
+export interface _CaffeineStorageCreateCertificateResult {
+    method: string;
+    blob_hash: string;
+}
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
 export interface Property {
     id: bigint;
     title: string;
@@ -109,20 +132,39 @@ export interface Property {
     location: string;
     contactPhone: string;
 }
-export type Time = bigint;
-export interface _CaffeineStorageRefillInformation {
-    proposed_top_up_amount?: bigint;
+export interface ShoppingItem {
+    productName: string;
+    currency: string;
+    quantity: bigint;
+    priceInCents: bigint;
+    productDescription: string;
 }
-export interface _CaffeineStorageCreateCertificateResult {
-    method: string;
-    blob_hash: string;
+export interface TransformationInput {
+    context: Uint8Array;
+    response: http_request_result;
 }
-export interface UserProfile {
-    name: string;
+export type StripeSessionStatus = {
+    __kind__: "completed";
+    completed: {
+        userPrincipal?: string;
+        response: string;
+    };
+} | {
+    __kind__: "failed";
+    failed: {
+        error: string;
+    };
+};
+export interface StripeConfiguration {
+    allowedCountries: Array<string>;
+    secretKey: string;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
+}
+export interface UserProfile {
+    name: string;
 }
 export enum ListingType {
     buy = "buy",
@@ -148,6 +190,7 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<bigint>;
     deleteProperty(id: bigint): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
@@ -155,12 +198,16 @@ export interface backendInterface {
     getMyProperties(): Promise<Array<Property>>;
     getProperties(city: string | null, listingType: ListingType | null, propertyType: PropertyType | null, minPrice: bigint | null, maxPrice: bigint | null, minBedrooms: bigint | null, maxBedrooms: bigint | null): Promise<Array<Property>>;
     getProperty(id: bigint): Promise<Property | null>;
+    getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    isStripeConfigured(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setStripeConfiguration(config: StripeConfiguration): Promise<void>;
+    transform(input: TransformationInput): Promise<TransformationOutput>;
     updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<void>;
 }
-import type { ListingType as _ListingType, Property as _Property, PropertyType as _PropertyType, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ListingType as _ListingType, Principal as _Principal, Property as _Property, PropertyType as _PropertyType, StripeSessionStatus as _StripeSessionStatus, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -275,6 +322,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async createCheckoutSession(arg0: Array<ShoppingItem>, arg1: string, arg2: string): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createCheckoutSession(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createCheckoutSession(arg0, arg1, arg2);
+            return result;
+        }
+    }
     async createProperty(arg0: string, arg1: string, arg2: bigint, arg3: string, arg4: string, arg5: string, arg6: PropertyType, arg7: ListingType, arg8: bigint, arg9: bigint, arg10: bigint, arg11: string, arg12: string, arg13: Array<string>): Promise<bigint> {
         if (this.processError) {
             try {
@@ -373,6 +434,20 @@ export class Backend implements backendInterface {
             return from_candid_opt_n28(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getStripeSessionStatus(arg0: string): Promise<StripeSessionStatus> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getStripeSessionStatus(arg0);
+                return from_candid_StripeSessionStatus_n29(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getStripeSessionStatus(arg0);
+            return from_candid_StripeSessionStatus_n29(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -401,6 +476,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isStripeConfigured(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isStripeConfigured();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isStripeConfigured();
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -412,6 +501,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async setStripeConfiguration(arg0: StripeConfiguration): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setStripeConfiguration(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setStripeConfiguration(arg0);
+            return result;
+        }
+    }
+    async transform(arg0: TransformationInput): Promise<TransformationOutput> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.transform(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.transform(arg0);
             return result;
         }
     }
@@ -439,6 +556,9 @@ function from_candid_PropertyType_n20(_uploadFile: (file: ExternalBlob) => Promi
 function from_candid_Property_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Property): Property {
     return from_candid_record_n19(_uploadFile, _downloadFile, value);
 }
+function from_candid_StripeSessionStatus_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
+    return from_candid_variant_n30(_uploadFile, _downloadFile, value);
+}
 function from_candid_UserRole_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n16(_uploadFile, _downloadFile, value);
 }
@@ -451,6 +571,9 @@ function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Property]): Property | null {
     return value.length === 0 ? null : from_candid_Property_n18(_uploadFile, _downloadFile, value[0]);
 }
+function from_candid_opt_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
 }
@@ -462,7 +585,7 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
     title: string;
     photoUrls: Array<string>;
     postedAt: _Time;
-    postedBy: Principal;
+    postedBy: _Principal;
     contactName: string;
     propertyType: _PropertyType;
     bedrooms: bigint;
@@ -517,6 +640,18 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
         contactPhone: value.contactPhone
     };
 }
+function from_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    userPrincipal: [] | [string];
+    response: string;
+}): {
+    userPrincipal?: string;
+    response: string;
+} {
+    return {
+        userPrincipal: record_opt_to_undefined(from_candid_opt_n32(_uploadFile, _downloadFile, value.userPrincipal)),
+        response: value.response
+    };
+}
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     success: [] | [boolean];
     topped_up_amount: [] | [bigint];
@@ -555,6 +690,35 @@ function from_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Ui
     rent: null;
 }): ListingType {
     return "buy" in value ? ListingType.buy : "rent" in value ? ListingType.rent : value;
+}
+function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    completed: {
+        userPrincipal: [] | [string];
+        response: string;
+    };
+} | {
+    failed: {
+        error: string;
+    };
+}): {
+    __kind__: "completed";
+    completed: {
+        userPrincipal?: string;
+        response: string;
+    };
+} | {
+    __kind__: "failed";
+    failed: {
+        error: string;
+    };
+} {
+    return "completed" in value ? {
+        __kind__: "completed",
+        completed: from_candid_record_n31(_uploadFile, _downloadFile, value.completed)
+    } : "failed" in value ? {
+        __kind__: "failed",
+        failed: value.failed
+    } : value;
 }
 function from_candid_vec_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Property>): Array<Property> {
     return value.map((x)=>from_candid_Property_n18(_uploadFile, _downloadFile, x));

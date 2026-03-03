@@ -1,44 +1,32 @@
-# FS Reality
+# FS Realty
 
 ## Current State
-New project. No existing code.
+A real estate listings platform where users can post, browse, and filter properties (apartments, villas, plots, commercial). Features include:
+- Internet Identity authentication
+- Property creation, editing, deletion
+- Photo uploads via blob-storage
+- Filtering by city, listing type, property type, price, bedrooms
+- Authorization with role-based access control
 
 ## Requested Changes (Diff)
 
 ### Add
-- Real estate property listings platform inspired by 99acres
-- Browse listings by category: Buy, Rent, Commercial, Plots/Land
-- Property listing card with photo, price, location, bedrooms, bathrooms, area (sq ft)
-- Search and filter by: location, price range, property type, BHK (bedrooms), area
-- Post a new property listing (authenticated users)
-- Property detail page with full description, specs, and contact info
-- User dashboard to manage own listings (edit, delete)
-- Sample listings seeded with realistic Indian real estate data
-- Internet Identity authentication for posting
+- Stripe payment integration for property listing fees
+- A "Post Property" payment step: before a listing goes live, the user must pay a listing fee via Stripe
+- Payment history page showing past transactions for the logged-in user
+- Backend: store payment records (paymentId, propertyId, amount, status, createdAt, paidBy)
+- Backend: `createPaymentIntent` to initiate a Stripe payment for a listing fee
+- Backend: `confirmPayment` to mark a listing as paid and activate it
+- Backend: `getMyPayments` to retrieve payment history for the caller
+- Frontend: PaymentPage component shown after property form submission (before listing goes live)
+- Frontend: Stripe checkout UI (card input, pay button)
+- Frontend: Payment success/failure states
+- Frontend: Payment history tab in "My Listings" page
 
 ### Modify
-- N/A (new project)
+- `createProperty` flow: newly created properties start as `isActive = false` until payment is confirmed
+- PostPropertyPage: after form submission, redirect to payment step
+- MyListingsPage: add a "Payments" tab
 
 ### Remove
-- N/A (new project)
-
-## Implementation Plan
-
-### Backend
-- `Property` data type: id, title, description, price, location, city, state, propertyType (Apartment/Villa/Plot/Commercial), listingType (Buy/Rent), bedrooms, bathrooms, area, postedBy (principal), postedAt, images (text array), contactName, contactPhone, isActive
-- `createProperty(input)` -- authenticated, creates listing
-- `getProperties(filters)` -- public, returns filtered listings
-- `getProperty(id)` -- public, returns single listing
-- `updateProperty(id, input)` -- authenticated, only owner can update
-- `deleteProperty(id)` -- authenticated, only owner can delete
-- `getUserProperties()` -- authenticated, returns caller's listings
-- Seed sample data with realistic Indian real estate listings across cities (Mumbai, Delhi, Bangalore, Chennai, Hyderabad)
-
-### Frontend
-- Homepage with hero search bar, featured listings grid, category quick-links
-- Listings browse page with sidebar filters (price, type, BHK, area) and grid/list view toggle
-- Property detail page with image gallery placeholder, full specs table, contact card
-- Post property form (multi-step or single page) with all fields
-- My Listings dashboard for authenticated user
-- Internet Identity login/logout in navbar
-- Responsive layout with clean card-based design
+- Nothing removed
