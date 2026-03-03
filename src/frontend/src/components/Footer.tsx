@@ -87,11 +87,11 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-primary-foreground/70">
                 <Phone className="w-4 h-4 text-brand shrink-0" />
-                <span>+91 1800 123 4567</span>
+                <span>+916398071796</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-primary-foreground/70">
                 <Mail className="w-4 h-4 text-brand shrink-0" />
-                <span>support@fsreality.in</span>
+                <span>faisalbiba1@gmail.com</span>
               </li>
               <li className="flex items-start gap-2 text-sm text-primary-foreground/70">
                 <MapPin className="w-4 h-4 text-brand shrink-0 mt-0.5" />
