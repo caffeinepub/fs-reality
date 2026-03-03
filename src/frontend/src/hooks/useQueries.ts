@@ -33,6 +33,7 @@ export interface CreatePropertyInput {
   areaSqFt: bigint;
   contactName: string;
   contactPhone: string;
+  photoUrls: Array<string>;
 }
 
 // ─── Get All Properties with Filters ───
@@ -59,7 +60,7 @@ export function useGetProperties(filters?: PropertyFilters) {
 // ─── Get Single Property ───
 export function useGetProperty(id: bigint | null) {
   const { actor, isFetching } = useActor();
-  return useQuery<Property>({
+  return useQuery<Property | null>({
     queryKey: queryKeys.property(id ?? BigInt(0)),
     queryFn: async () => {
       if (!actor || id === null) throw new Error("No actor or id");
@@ -103,6 +104,7 @@ export function useCreateProperty() {
         input.areaSqFt,
         input.contactName,
         input.contactPhone,
+        input.photoUrls,
       );
     },
     onSuccess: () => {
@@ -137,6 +139,7 @@ export function useUpdateProperty() {
         input.areaSqFt,
         input.contactName,
         input.contactPhone,
+        input.photoUrls,
       );
     },
     onSuccess: (_, { id }) => {

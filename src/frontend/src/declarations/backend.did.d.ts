@@ -15,7 +15,8 @@ export type ListingType = { 'buy' : null } |
 export interface Property {
   'id' : bigint,
   'title' : string,
-  'postedAt' : bigint,
+  'photoUrls' : Array<string>,
+  'postedAt' : Time,
   'postedBy' : Principal,
   'contactName' : string,
   'propertyType' : PropertyType,
@@ -35,11 +36,38 @@ export type PropertyType = { 'commercial' : null } |
   { 'villa' : null } |
   { 'plot' : null } |
   { 'apartment' : null };
+export type Time = bigint;
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createProperty' : ActorMethod<
@@ -57,6 +85,7 @@ export interface _SERVICE {
       bigint,
       string,
       string,
+      Array<string>,
     ],
     bigint
   >,
@@ -76,7 +105,7 @@ export interface _SERVICE {
     ],
     Array<Property>
   >,
-  'getProperty' : ActorMethod<[bigint], Property>,
+  'getProperty' : ActorMethod<[bigint], [] | [Property]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
@@ -96,6 +125,7 @@ export interface _SERVICE {
       bigint,
       string,
       string,
+      Array<string>,
     ],
     undefined
   >,

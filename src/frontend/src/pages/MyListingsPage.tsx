@@ -28,21 +28,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Link } from "@tanstack/react-router";
-import {
-  Building2,
-  Check,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Building2, Check, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Bath, BedDouble, MapPin, Maximize2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import type { Property } from "../backend.d";
+import PhotoUploader from "../components/PhotoUploader";
 import {
   useDeleteProperty,
   useGetMyProperties,
@@ -55,6 +48,7 @@ import {
   PROPERTY_TYPE_LABELS,
 } from "../utils/constants";
 import { formatArea, formatIndianPrice } from "../utils/formatters";
+import { normalizePhotoUrls } from "../utils/normalizePhotoUrls";
 
 const PROPERTY_IMAGES: Record<PropertyType, string> = {
   [PropertyType.apartment]:
@@ -79,6 +73,7 @@ interface EditFormData {
   areaSqFt: string;
   contactName: string;
   contactPhone: string;
+  photoUrls: string[];
 }
 
 export default function MyListingsPage() {
@@ -108,6 +103,7 @@ export default function MyListingsPage() {
       areaSqFt: Number(property.areaSqFt).toString(),
       contactName: property.contactName,
       contactPhone: property.contactPhone,
+      photoUrls: normalizePhotoUrls(property.photoUrls),
     });
   }
 
@@ -142,6 +138,7 @@ export default function MyListingsPage() {
           areaSqFt: BigInt(Math.round(Number(editForm.areaSqFt))),
           contactName: editForm.contactName,
           contactPhone: editForm.contactPhone,
+          photoUrls: editForm.photoUrls,
         },
       });
       toast.success("Property updated successfully.");
@@ -242,7 +239,11 @@ export default function MyListingsPage() {
           <AnimatePresence>
             {properties.map((property, i) => {
               const isBuy = property.listingType === ListingType.buy;
-              const image = PROPERTY_IMAGES[property.propertyType];
+              const normalizedPhotos = normalizePhotoUrls(property.photoUrls);
+              const image =
+                normalizedPhotos.length > 0
+                  ? normalizedPhotos[0]
+                  : PROPERTY_IMAGES[property.propertyType];
               return (
                 <motion.div
                   key={property.id.toString()}
@@ -575,6 +576,23 @@ export default function MyListingsPage() {
                     }
                   />
                 </div>
+              </div>
+
+              {/* Photo Management */}
+              <div className="space-y-2">
+                <Label className="font-semibold">
+                  Property Photos
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    (optional)
+                  </span>
+                </Label>
+                <PhotoUploader
+                  key={editProperty?.id?.toString()}
+                  initialUrls={editForm.photoUrls}
+                  onChange={(urls) => updateEditField("photoUrls", urls)}
+                  maxPhotos={10}
+                  disabled={isUpdating}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">

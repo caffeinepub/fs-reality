@@ -10,7 +10,8 @@ export type Option<T> = Some<T> | None;
 export interface Property {
     id: bigint;
     title: string;
-    postedAt: bigint;
+    photoUrls: Array<string>;
+    postedAt: Time;
     postedBy: Principal;
     contactName: string;
     propertyType: PropertyType;
@@ -26,6 +27,7 @@ export interface Property {
     location: string;
     contactPhone: string;
 }
+export type Time = bigint;
 export interface UserProfile {
     name: string;
 }
@@ -46,15 +48,15 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string): Promise<bigint>;
+    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<bigint>;
     deleteProperty(id: bigint): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMyProperties(): Promise<Array<Property>>;
     getProperties(city: string | null, listingType: ListingType | null, propertyType: PropertyType | null, minPrice: bigint | null, maxPrice: bigint | null, minBedrooms: bigint | null, maxBedrooms: bigint | null): Promise<Array<Property>>;
-    getProperty(id: bigint): Promise<Property>;
+    getProperty(id: bigint): Promise<Property | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string): Promise<void>;
+    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<void>;
 }

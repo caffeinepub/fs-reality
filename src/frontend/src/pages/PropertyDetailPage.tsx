@@ -9,13 +9,16 @@ import {
   BedDouble,
   Building2,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   MapPin,
   Maximize2,
   Phone,
   Share2,
   User,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import { useGetProperty } from "../hooks/useQueries";
@@ -30,6 +33,28 @@ import {
   formatFullPrice,
   formatIndianPrice,
 } from "../utils/formatters";
+import { normalizePhotoUrls } from "../utils/normalizePhotoUrls";
+
+interface DisplayProperty {
+  id: number | bigint;
+  title: string;
+  description: string;
+  price: number | bigint;
+  location: string;
+  city: string;
+  state: string;
+  propertyType: PropertyType;
+  listingType: ListingType;
+  bedrooms: number | bigint;
+  bathrooms: number | bigint;
+  areaSqFt: number | bigint;
+  contactName: string;
+  contactPhone: string;
+  image?: string;
+  photoUrls?: string[];
+  postedAt?: bigint | number;
+  isActive?: boolean;
+}
 
 const PROPERTY_IMAGES: Record<PropertyType, string> = {
   [PropertyType.apartment]:
@@ -44,6 +69,7 @@ export default function PropertyDetailPage() {
   const params = useParams({ from: "/property/$id" });
   const router = useRouter();
   const id = BigInt(params.id);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   const { data: property, isLoading, isError } = useGetProperty(id);
 
@@ -51,7 +77,11 @@ export default function PropertyDetailPage() {
   const sampleProperty = SAMPLE_PROPERTIES.find(
     (p) => p.id === Number(params.id),
   );
-  const displayProperty = property || sampleProperty;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const displayProperty = (property || sampleProperty) as any as
+    | DisplayProperty
+    | null
+    | undefined;
 
   if (isLoading && !sampleProperty) {
     return (
@@ -113,11 +143,26 @@ export default function PropertyDetailPage() {
   const bedrooms = Number(displayProperty.bedrooms);
   const bathrooms = Number(displayProperty.bathrooms);
   const isBuy = displayProperty.listingType === ListingType.buy;
-  const image =
-    ("image" in displayProperty && displayProperty.image) ||
-    PROPERTY_IMAGES[displayProperty.propertyType];
-  const postedAt =
-    "postedAt" in displayProperty ? displayProperty.postedAt : null;
+
+  // Build photo array: prefer photoUrls from property, else fallback static image
+  const normalizedPhotos = normalizePhotoUrls(displayProperty.photoUrls);
+  const photoUrls =
+    normalizedPhotos.length > 0
+      ? normalizedPhotos
+      : [
+          displayProperty.image ||
+            PROPERTY_IMAGES[displayProperty.propertyType],
+        ];
+
+  const postedAt = displayProperty.postedAt ?? null;
+
+  function prevPhoto() {
+    setActivePhotoIndex((i) => (i - 1 + photoUrls.length) % photoUrls.length);
+  }
+
+  function nextPhoto() {
+    setActivePhotoIndex((i) => (i + 1) % photoUrls.length);
+  }
 
   function handleShare() {
     navigator.clipboard.writeText(window.location.href);
@@ -137,56 +182,117 @@ export default function PropertyDetailPage() {
         Back to Listings
       </Button>
 
-      {/* Hero Image */}
+      {/* Hero Image / Photo Gallery */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative h-64 sm:h-80 md:h-[420px] rounded-2xl overflow-hidden mb-8 shadow-card"
+        className="mb-8 space-y-2"
       >
-        <img
-          src={image}
-          alt={displayProperty.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Main photo */}
+        <div className="relative h-64 sm:h-80 md:h-[420px] rounded-2xl overflow-hidden shadow-card">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={activePhotoIndex}
+              src={photoUrls[activePhotoIndex]}
+              alt={`${displayProperty.title} view ${activePhotoIndex + 1}`}
+              className="w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-        {/* Badges */}
-        <div className="absolute top-4 left-4 flex gap-2">
-          <Badge
-            className={`text-sm font-semibold px-3 py-1 ${
-              isBuy
-                ? "bg-primary text-primary-foreground"
-                : "bg-brand text-white"
-            }`}
+          {/* Carousel arrows (only if multiple photos) */}
+          {photoUrls.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={prevPhoto}
+                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={nextPhoto}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              {/* Photo counter */}
+              <div className="absolute bottom-14 right-4 bg-black/50 text-white text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm">
+                {activePhotoIndex + 1} / {photoUrls.length}
+              </div>
+            </>
+          )}
+
+          {/* Badges */}
+          <div className="absolute top-4 left-4 flex gap-2">
+            <Badge
+              className={`text-sm font-semibold px-3 py-1 ${
+                isBuy
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-brand text-white"
+              }`}
+            >
+              {LISTING_TYPE_LABELS[displayProperty.listingType]}
+            </Badge>
+            <Badge className="text-sm bg-white/90 text-foreground font-semibold px-3 py-1">
+              {PROPERTY_TYPE_LABELS[displayProperty.propertyType]}
+            </Badge>
+          </div>
+
+          {/* Share button */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white transition-colors"
+            title="Share property"
           >
-            {LISTING_TYPE_LABELS[displayProperty.listingType]}
-          </Badge>
-          <Badge className="text-sm bg-white/90 text-foreground font-semibold px-3 py-1">
-            {PROPERTY_TYPE_LABELS[displayProperty.propertyType]}
-          </Badge>
-        </div>
+            <Share2 className="w-4 h-4 text-foreground" />
+          </button>
 
-        {/* Share button */}
-        <button
-          type="button"
-          onClick={handleShare}
-          className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white transition-colors"
-          title="Share property"
-        >
-          <Share2 className="w-4 h-4 text-foreground" />
-        </button>
-
-        {/* Price overlay */}
-        <div className="absolute bottom-4 left-4">
-          <div className="price-badge text-3xl font-extrabold text-white drop-shadow-lg">
-            {formatIndianPrice(displayProperty.price)}
-            {displayProperty.listingType === ListingType.rent && (
-              <span className="text-base font-normal text-white/80 ml-1">
-                /month
-              </span>
-            )}
+          {/* Price overlay */}
+          <div className="absolute bottom-4 left-4">
+            <div className="price-badge text-3xl font-extrabold text-white drop-shadow-lg">
+              {formatIndianPrice(displayProperty.price)}
+              {displayProperty.listingType === ListingType.rent && (
+                <span className="text-base font-normal text-white/80 ml-1">
+                  /month
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Thumbnail strip (only if multiple photos) */}
+        {photoUrls.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {photoUrls.map((url, idx) => (
+              <button
+                key={url}
+                type="button"
+                onClick={() => setActivePhotoIndex(idx)}
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                  idx === activePhotoIndex
+                    ? "border-brand opacity-100"
+                    : "border-transparent opacity-60 hover:opacity-80"
+                }`}
+                aria-label={`View image ${idx + 1}`}
+              >
+                <img
+                  src={url}
+                  alt={`View ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       {/* Main Content */}

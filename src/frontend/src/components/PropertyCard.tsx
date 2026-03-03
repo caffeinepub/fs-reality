@@ -6,6 +6,7 @@ import type { Property } from "../backend.d";
 import { ListingType, PropertyType } from "../backend.d";
 import { LISTING_TYPE_LABELS, PROPERTY_TYPE_LABELS } from "../utils/constants";
 import { formatArea, formatIndianPrice } from "../utils/formatters";
+import { normalizePhotoUrls } from "../utils/normalizePhotoUrls";
 
 interface PropertyCardProps {
   property:
@@ -23,6 +24,7 @@ interface PropertyCardProps {
         bathrooms: number | bigint;
         areaSqFt: number | bigint;
         image?: string;
+        photoUrls?: Array<string>;
       };
   index?: number;
   className?: string;
@@ -47,7 +49,10 @@ export default function PropertyCard({
   const id = property.id;
   const bedrooms = Number(property.bedrooms);
   const bathrooms = Number(property.bathrooms);
+  const normalizedPhotos =
+    "photoUrls" in property ? normalizePhotoUrls(property.photoUrls) : [];
   const image =
+    (normalizedPhotos.length > 0 && normalizedPhotos[0]) ||
     ("image" in property && property.image) ||
     PROPERTY_IMAGES[property.propertyType];
   const isBuy = property.listingType === ListingType.buy;

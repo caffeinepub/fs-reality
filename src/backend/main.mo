@@ -1,60 +1,54 @@
-import Array "mo:core/Array";
+import Map "mo:core/Map";
+import Nat "mo:core/Nat";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
-import Map "mo:core/Map";
+import Iter "mo:core/Iter";
+import Array "mo:core/Array";
 import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
-import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
+
+
 actor {
-  module Property {
-    public type PropertyType = {
-      #apartment;
-      #villa;
-      #plot;
-      #commercial;
-    };
+  include MixinStorage();
 
-    public type ListingType = {
-      #buy;
-      #rent;
-    };
-
-    public type Property = {
-      id : Nat;
-      title : Text;
-      description : Text;
-      price : Nat;
-      location : Text;
-      city : Text;
-      state : Text;
-      propertyType : PropertyType;
-      listingType : ListingType;
-      bedrooms : Nat;
-      bathrooms : Nat;
-      areaSqFt : Nat;
-      postedBy : Principal;
-      postedAt : Int;
-      contactName : Text;
-      contactPhone : Text;
-      isActive : Bool;
-    };
-
-    public func compareByPrice(p1 : Property, p2 : Property) : Order.Order {
-      Nat.compare(p1.price, p2.price);
-    };
-
-    public func compareByDate(p1 : Property, p2 : Property) : Order.Order {
-      Int.compare(p1.postedAt, p2.postedAt);
-    };
+  public type PropertyType = {
+    #apartment;
+    #villa;
+    #plot;
+    #commercial;
   };
 
-  public type Property = Property.Property;
-  public type PropertyType = Property.PropertyType;
-  public type ListingType = Property.ListingType;
+  public type ListingType = {
+    #buy;
+    #rent;
+  };
+
+  public type Property = {
+    id : Nat;
+    title : Text;
+    description : Text;
+    price : Nat;
+    location : Text;
+    city : Text;
+    state : Text;
+    propertyType : PropertyType;
+    listingType : ListingType;
+    bedrooms : Nat;
+    bathrooms : Nat;
+    areaSqFt : Nat;
+    contactName : Text;
+    contactPhone : Text;
+    photoUrls : [Text];
+    postedBy : Principal;
+    postedAt : Time.Time;
+    isActive : Bool;
+  };
 
   public type UserProfile = {
     name : Text;
@@ -69,7 +63,7 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can access profiles");
     };
     userProfiles.get(caller);
@@ -83,7 +77,7 @@ actor {
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
@@ -103,8 +97,9 @@ actor {
     areaSqFt : Nat,
     contactName : Text,
     contactPhone : Text,
+    photoUrls : [Text],
   ) : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create properties");
     };
 
@@ -121,24 +116,21 @@ actor {
       bedrooms;
       bathrooms;
       areaSqFt;
-      postedBy = caller;
-      postedAt = Time.now();
       contactName;
       contactPhone;
+      photoUrls;
+      postedBy = caller;
+      postedAt = Time.now();
       isActive = true;
     };
 
     properties.add(nextId, property);
-    let currentId = nextId;
     nextId += 1;
-    currentId;
+    property.id;
   };
 
-  public query ({ caller }) func getProperty(id : Nat) : async Property {
-    switch (properties.get(id)) {
-      case (?property) { property };
-      case (null) { Runtime.trap("Property not found") };
-    };
+  public query ({ caller }) func getProperty(id : Nat) : async ?Property {
+    properties.get(id);
   };
 
   public query ({ caller }) func getProperties(
@@ -150,20 +142,42 @@ actor {
     minBedrooms : ?Nat,
     maxBedrooms : ?Nat,
   ) : async [Property] {
-    let filtered = properties.values().toArray().filter(
-      func(p) {
-        if (not p.isActive) { return false };
-        switch (city) { case (?c) { if (p.city != c) { return false } }; case (null) {} };
-        switch (listingType) { case (?l) { if (p.listingType != l) { return false } }; case (null) {} };
-        switch (propertyType) { case (?pt) { if (p.propertyType != pt) { return false } }; case (null) {} };
-        switch (minPrice) { case (?minP) { if (p.price < minP) { return false } }; case (null) {} };
-        switch (maxPrice) { case (?maxP) { if (p.price > maxP) { return false } }; case (null) {} };
-        switch (minBedrooms) { case (?minB) { if (p.bedrooms < minB) { return false } }; case (null) {} };
-        switch (maxBedrooms) { case (?maxB) { if (p.bedrooms > maxB) { return false } }; case (null) {} };
-        true;
+    let filtered = properties.toArray().filter(
+      func((_, p)) {
+        var matches = p.isActive;
+        switch (city, matches) {
+          case (?c, true) { matches := p.city == c };
+          case (_) {};
+        };
+        switch (listingType, matches) {
+          case (?l, true) { matches := p.listingType == l };
+          case (_) {};
+        };
+        switch (propertyType, matches) {
+          case (?pt, true) { matches := p.propertyType == pt };
+          case (_) {};
+        };
+        switch (minPrice, matches) {
+          case (?minP, true) { matches := p.price >= minP };
+          case (_) {};
+        };
+        switch (maxPrice, matches) {
+          case (?maxP, true) { matches := p.price <= maxP };
+          case (_) {};
+        };
+        switch (minBedrooms, matches) {
+          case (?minB, true) { matches := p.bedrooms >= minB };
+          case (_) {};
+        };
+        switch (maxBedrooms, matches) {
+          case (?maxB, true) { matches := p.bedrooms <= maxB };
+          case (_) {};
+        };
+        matches;
       }
-    );
-    filtered;
+    ).map(func((_, p)) { p });
+
+    filtered.reverse();
   };
 
   public shared ({ caller }) func updateProperty(
@@ -181,8 +195,9 @@ actor {
     areaSqFt : Nat,
     contactName : Text,
     contactPhone : Text,
+    photoUrls : [Text],
   ) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update properties");
     };
 
@@ -204,10 +219,11 @@ actor {
           bedrooms;
           bathrooms;
           areaSqFt;
-          postedBy = caller;
-          postedAt = existing.postedAt;
           contactName;
           contactPhone;
+          photoUrls;
+          postedBy = caller;
+          postedAt = existing.postedAt;
           isActive = existing.isActive;
         };
         properties.add(id, updated);
@@ -217,7 +233,7 @@ actor {
   };
 
   public shared ({ caller }) func deleteProperty(id : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete properties");
     };
 
@@ -243,6 +259,7 @@ actor {
           postedAt = existing.postedAt;
           contactName = existing.contactName;
           contactPhone = existing.contactPhone;
+          photoUrls = existing.photoUrls;
           isActive = false;
         };
         properties.add(id, updated);
@@ -252,7 +269,7 @@ actor {
   };
 
   public query ({ caller }) func getMyProperties() : async [Property] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view their properties");
     };
 
@@ -261,6 +278,6 @@ actor {
         p.postedBy == caller and p.isActive
       }
     );
-    myProps.sort(Property.compareByDate);
+    myProps.reverse();
   };
 };

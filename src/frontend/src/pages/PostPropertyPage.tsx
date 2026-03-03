@@ -17,6 +17,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, type PropertyType } from "../backend.d";
+import PhotoUploader from "../components/PhotoUploader";
 import { useCreateProperty } from "../hooks/useQueries";
 import {
   INDIAN_CITIES,
@@ -38,6 +39,7 @@ interface FormData {
   areaSqFt: string;
   contactName: string;
   contactPhone: string;
+  photoUrls: string[];
 }
 
 interface FormErrors {
@@ -62,6 +64,7 @@ export default function PostPropertyPage() {
     areaSqFt: "",
     contactName: "",
     contactPhone: "",
+    photoUrls: [],
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -142,6 +145,7 @@ export default function PostPropertyPage() {
         areaSqFt: BigInt(Math.round(Number(form.areaSqFt))),
         contactName: form.contactName,
         contactPhone: form.contactPhone,
+        photoUrls: form.photoUrls,
       });
       setSubmitted(true);
       toast.success("Property listed successfully!");
@@ -516,6 +520,25 @@ export default function PostPropertyPage() {
                 )}
               </div>
             </div>
+          </section>
+
+          {/* Photos */}
+          <section className="bg-card border border-border rounded-2xl p-6 space-y-5">
+            <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
+              <Badge className="bg-brand text-white rounded-full w-6 h-6 flex items-center justify-center p-0 text-xs">
+                5
+              </Badge>
+              Property Photos
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                (optional)
+              </span>
+            </h2>
+            <PhotoUploader
+              initialUrls={[]}
+              onChange={(urls) => updateField("photoUrls", urls)}
+              maxPhotos={10}
+              disabled={isPending}
+            />
           </section>
 
           {/* Submit */}
