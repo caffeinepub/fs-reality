@@ -1,5 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useParams, useRouter } from "@tanstack/react-router";
@@ -9,8 +14,10 @@ import {
   BedDouble,
   Building2,
   Calendar,
+  Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
   MapPin,
   Maximize2,
   Phone,
@@ -20,6 +27,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
 import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import { useGetProperty } from "../hooks/useQueries";
@@ -72,6 +80,8 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const id = BigInt(params.id);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const { data: property, isLoading, isError } = useGetProperty(id);
 
@@ -166,9 +176,53 @@ export default function PropertyDetailPage() {
     setActivePhotoIndex((i) => (i + 1) % photoUrls.length);
   }
 
-  function handleShare() {
-    navigator.clipboard.writeText(window.location.href);
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = window.location.href;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    setLinkCopied(true);
     toast.success("Link copied to clipboard!");
+    setTimeout(() => setLinkCopied(false), 2000);
+    setShareOpen(false);
+  }
+
+  function handleShareWhatsApp() {
+    const text = encodeURIComponent(
+      `🏠 Check out this property on Faisal Property: ${displayProperty?.title}\n\n${window.location.href}`,
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
+    setShareOpen(false);
+  }
+
+  function handleShareFacebook() {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+      "_blank",
+      "noopener",
+    );
+    setShareOpen(false);
+  }
+
+  async function handleShareInstagram() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = window.location.href;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    toast.success("Link copied! Paste it in your Instagram story or bio.");
+    setShareOpen(false);
   }
 
   return (
@@ -248,15 +302,70 @@ export default function PropertyDetailPage() {
             </Badge>
           </div>
 
-          {/* Share button */}
-          <button
-            type="button"
-            onClick={handleShare}
-            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white transition-colors"
-            title="Share property"
-          >
-            <Share2 className="w-4 h-4 text-foreground" />
-          </button>
+          {/* Share button with popover */}
+          <div className="absolute top-4 right-4">
+            <Popover open={shareOpen} onOpenChange={setShareOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="bg-white/90 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white transition-colors"
+                  title="Share property"
+                  data-ocid="property.share_popover"
+                >
+                  <Share2 className="w-4 h-4 text-foreground" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-52 p-2"
+                align="end"
+                side="bottom"
+                sideOffset={8}
+              >
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    data-ocid="property.share_copy_button"
+                  >
+                    {linkCopied ? (
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
+                    {linkCopied ? "Copied!" : "Copy Link"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareWhatsApp}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    data-ocid="property.share_whatsapp_button"
+                  >
+                    <SiWhatsapp className="w-4 h-4 text-[#25D366] shrink-0" />
+                    WhatsApp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareFacebook}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    data-ocid="property.share_facebook_button"
+                  >
+                    <SiFacebook className="w-4 h-4 text-[#1877F2] shrink-0" />
+                    Facebook
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareInstagram}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    data-ocid="property.share_instagram_button"
+                  >
+                    <SiInstagram className="w-4 h-4 text-[#E1306C] shrink-0" />
+                    Instagram
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Price overlay */}
           <div className="absolute bottom-4 left-4">
@@ -491,7 +600,7 @@ export default function PropertyDetailPage() {
             </a>
 
             <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
-              Mention FS Realty when contacting for better response.
+              Mention Faisal Property when contacting for better response.
             </p>
 
             <Separator className="my-4" />

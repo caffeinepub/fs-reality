@@ -36,12 +36,14 @@ import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import type { Property } from "../backend.d";
 import PhotoUploader from "../components/PhotoUploader";
+import ShareEarnCard from "../components/ShareEarnCard";
 import VideoUploader from "../components/VideoUploader";
 import {
   useDeleteProperty,
   useGetMyProperties,
   useUpdateProperty,
 } from "../hooks/useQueries";
+import { useReferral } from "../hooks/useReferral";
 import {
   INDIAN_CITIES,
   INDIAN_STATES,
@@ -84,6 +86,7 @@ export default function MyListingsPage() {
     useDeleteProperty();
   const { mutateAsync: updateProperty, isPending: isUpdating } =
     useUpdateProperty();
+  const { referralUrl, bonusDaysEarned } = useReferral();
 
   const [deleteId, setDeleteId] = useState<bigint | null>(null);
   const [editProperty, setEditProperty] = useState<Property | null>(null);
@@ -180,6 +183,14 @@ export default function MyListingsPage() {
             Post New
           </Button>
         </Link>
+      </div>
+
+      {/* Share & Earn Banner */}
+      <div className="mb-6">
+        <ShareEarnCard
+          referralUrl={referralUrl}
+          bonusDaysEarned={bonusDaysEarned}
+        />
       </div>
 
       {/* Content */}

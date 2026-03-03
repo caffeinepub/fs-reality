@@ -10,6 +10,7 @@ import {
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
+import { useReferral } from "./hooks/useReferral";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
 import ListingsPage from "./pages/ListingsPage";
@@ -21,6 +22,9 @@ import PropertyDetailPage from "./pages/PropertyDetailPage";
 
 // ─── Root Layout ───
 function RootLayout() {
+  // Process incoming referral links on every page load
+  useReferral();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />

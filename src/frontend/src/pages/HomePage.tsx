@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
@@ -7,7 +13,9 @@ import {
   Award,
   Briefcase,
   Building2,
+  Check,
   ChevronRight,
+  Copy,
   Gift,
   Home,
   Layers,
@@ -18,10 +26,14 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { SiWhatsapp } from "react-icons/si";
+import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import PropertyCard from "../components/PropertyCard";
+import ShareEarnCard from "../components/ShareEarnCard";
 import { useFreeTrial } from "../hooks/useFreeTrial";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useReferral } from "../hooks/useReferral";
 import { INDIAN_CITIES, SAMPLE_PROPERTIES } from "../utils/constants";
 
 const LISTING_TABS = [
@@ -54,6 +66,28 @@ export default function HomePage() {
   const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity;
   const { isTrialActive, daysRemaining, hoursRemaining } = useFreeTrial();
+  const { referralUrl, bonusDaysEarned } = useReferral();
+  const [heroCopied, setHeroCopied] = useState(false);
+  const [mobileShareOpen, setMobileShareOpen] = useState(false);
+
+  async function handleHeroCopy() {
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setHeroCopied(true);
+      toast.success("Referral link copied!");
+      setTimeout(() => setHeroCopied(false), 2000);
+    } catch {
+      setHeroCopied(true);
+      setTimeout(() => setHeroCopied(false), 2000);
+    }
+  }
+
+  function handleHeroWhatsApp() {
+    const message = encodeURIComponent(
+      `🏠 Check out Faisal Property — India's trusted property marketplace!\n\nFind or post properties across India.\n\n👉 ${referralUrl}\n\nSign up via my link and get 3 extra days of free listings!`,
+    );
+    window.open(`https://wa.me/?text=${message}`, "_blank", "noopener");
+  }
 
   function handleSearch() {
     const params: Record<string, string> = {};
@@ -85,6 +119,65 @@ export default function HomePage() {
           }}
         />
         <div className="hero-gradient absolute inset-0" />
+
+        {/* Hero Share & Earn Banner — pinned top right */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="absolute top-5 right-4 z-20 hidden lg:block"
+          data-ocid="home.hero_share_earn.card"
+        >
+          <div className="bg-white/10 backdrop-blur-md border border-white/25 rounded-2xl px-4 py-3 max-w-xs shadow-2xl">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-400/30 flex items-center justify-center shrink-0">
+                <Gift className="w-3.5 h-3.5 text-emerald-300" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm leading-tight">
+                  Share &amp; Earn 3 Free Days
+                </p>
+                {bonusDaysEarned > 0 && (
+                  <p className="text-emerald-300 text-xs font-medium">
+                    {bonusDaysEarned} bonus day
+                    {bonusDaysEarned !== 1 ? "s" : ""} earned!
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="text-white/75 text-xs mb-3 leading-relaxed">
+              Invite friends via your link — you both get 3 bonus listing days
+              free.
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={handleHeroCopy}
+                data-ocid="home.hero_share_earn.copy_button"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-lg px-3 py-2 transition-all"
+              >
+                {heroCopied ? (
+                  <>
+                    <Check className="w-3 h-3" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" /> Copy Link
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleHeroWhatsApp}
+                data-ocid="home.hero_share_earn.whatsapp_button"
+                className="flex items-center justify-center gap-1.5 bg-[#25D366]/80 hover:bg-[#25D366] border border-[#25D366]/50 text-white text-xs font-semibold rounded-lg px-3 py-2 transition-all"
+              >
+                <SiWhatsapp className="w-3.5 h-3.5" />
+                Share
+              </button>
+            </div>
+          </div>
+        </motion.div>
 
         <div className="relative z-10 container mx-auto px-4 py-20 text-white">
           <motion.div
@@ -282,6 +375,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Share & Earn Section */}
+      <section className="py-16 container mx-auto px-4">
+        <div className="text-center mb-8">
+          <h2 className="font-heading text-3xl font-extrabold text-foreground">
+            Share & Earn Free Listing Days
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            Invite friends to Faisal Property and both of you get 3 bonus days
+            free
+          </p>
+        </div>
+        <div className="max-w-2xl mx-auto">
+          <ShareEarnCard
+            referralUrl={referralUrl}
+            bonusDaysEarned={bonusDaysEarned}
+          />
+        </div>
+      </section>
+
       {/* CTA Section */}
       {!isAuthenticated && (
         <section className="py-16 container mx-auto px-4">
@@ -295,7 +407,7 @@ export default function HomePage() {
                 Post for Free
               </Badge>
               <h2 className="font-heading text-3xl font-extrabold text-primary-foreground mb-3">
-                Own a Property? List it on FS Realty
+                Own a Property? List it on Faisal Property
               </h2>
               <p className="text-primary-foreground/70 mb-8 max-w-md mx-auto">
                 Reach thousands of serious buyers and tenants. Post your
@@ -316,7 +428,7 @@ export default function HomePage() {
       <section className="py-16 container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-heading text-3xl font-extrabold text-foreground">
-            Why FS Realty?
+            Why Faisal Property?
           </h2>
           <p className="text-muted-foreground mt-2">
             Trusted by over 1 lakh families across India
@@ -362,6 +474,43 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Mobile Floating Share & Earn FAB */}
+      <motion.button
+        type="button"
+        data-ocid="home.mobile_share_earn.button"
+        onClick={() => setMobileShareOpen(true)}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.4, type: "spring" }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed bottom-5 right-4 z-30 block lg:hidden flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold text-sm px-4 py-3 rounded-full shadow-lg shadow-emerald-500/40 transition-colors"
+        aria-label="Share &amp; Earn free listing days"
+      >
+        <Gift className="w-4 h-4 shrink-0" />
+        <span>Share &amp; Earn</span>
+      </motion.button>
+
+      {/* Mobile Share & Earn Bottom Drawer */}
+      <Drawer open={mobileShareOpen} onOpenChange={setMobileShareOpen}>
+        <DrawerContent
+          data-ocid="home.mobile_share_earn.drawer"
+          className="lg:hidden"
+        >
+          <DrawerHeader className="pb-2">
+            <DrawerTitle className="font-heading text-xl font-extrabold text-foreground flex items-center gap-2">
+              <Gift className="w-5 h-5 text-emerald-500" />
+              Share &amp; Earn Free Days
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-6 overflow-y-auto">
+            <ShareEarnCard
+              referralUrl={referralUrl}
+              bonusDaysEarned={bonusDaysEarned}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -67,7 +67,7 @@ export default function AdminPage() {
               Admin Settings
             </h1>
             <p className="text-muted-foreground text-sm">
-              Configure payment processing for FS Realty
+              Configure payment processing for Faisal Property
             </p>
           </div>
         </div>

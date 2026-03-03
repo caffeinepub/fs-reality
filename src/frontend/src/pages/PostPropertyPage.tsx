@@ -29,10 +29,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, type PropertyType } from "../backend.d";
 import PhotoUploader from "../components/PhotoUploader";
+import ShareEarnCard from "../components/ShareEarnCard";
 import VideoUploader from "../components/VideoUploader";
 import { useCreateCheckoutSession } from "../hooks/useCheckout";
 import { useFreeTrial } from "../hooks/useFreeTrial";
 import { useCreateProperty } from "../hooks/useQueries";
+import { useReferral } from "../hooks/useReferral";
 import {
   INDIAN_CITIES,
   INDIAN_STATES,
@@ -67,6 +69,7 @@ export default function PostPropertyPage() {
   const { mutateAsync: createCheckoutSession, isPending: isCheckoutPending } =
     useCreateCheckoutSession();
   const { isTrialActive, daysRemaining, hoursRemaining } = useFreeTrial();
+  const { referralUrl, bonusDaysEarned } = useReferral();
 
   const [form, setForm] = useState<FormData>({
     title: "",
@@ -194,7 +197,8 @@ export default function PostPropertyPage() {
             currency: "inr",
             quantity: 1n,
             priceInCents: 99900n,
-            productDescription: "FS Realty - Publish your property listing",
+            productDescription:
+              "Faisal Property - Publish your property listing",
           },
         ],
         successUrl: `${window.location.origin}/payment-success`,
@@ -494,7 +498,7 @@ export default function PostPropertyPage() {
           </h1>
         </div>
         <p className="text-muted-foreground ml-[3.25rem]">
-          Fill in the details below to list your property on FS Realty.
+          Fill in the details below to list your property on Faisal Property.
         </p>
       </div>
 
@@ -855,6 +859,20 @@ export default function PostPropertyPage() {
               onChange={(urls) => updateField("videoUrls", urls)}
               maxVideos={3}
               disabled={isPending}
+            />
+          </section>
+
+          {/* Share & Earn */}
+          <section>
+            <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2 mb-3">
+              <Badge className="bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center p-0 text-xs">
+                7
+              </Badge>
+              Share & Earn Extra Free Days
+            </h2>
+            <ShareEarnCard
+              referralUrl={referralUrl}
+              bonusDaysEarned={bonusDaysEarned}
             />
           </section>
 

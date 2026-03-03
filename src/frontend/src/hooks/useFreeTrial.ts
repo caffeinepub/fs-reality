@@ -1,5 +1,6 @@
 const STORAGE_KEY = "fs_realty_first_visit";
 const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+const REFERRAL_BONUS_KEY = "fs_realty_referral_bonus_ms";
 
 export interface FreeTrialState {
   isTrialActive: boolean;
@@ -17,7 +18,8 @@ export function useFreeTrial(): FreeTrialState {
   }
 
   const firstVisit = Number(firstVisitStr);
-  const trialEndsAt = new Date(firstVisit + TRIAL_DURATION_MS);
+  const bonusMs = Number(localStorage.getItem(REFERRAL_BONUS_KEY) || "0");
+  const trialEndsAt = new Date(firstVisit + TRIAL_DURATION_MS + bonusMs);
   const now = Date.now();
   const msRemaining = trialEndsAt.getTime() - now;
   const isTrialActive = msRemaining > 0;

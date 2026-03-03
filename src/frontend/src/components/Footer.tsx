@@ -102,7 +102,7 @@ export default function Footer() {
 
         <div className="mt-10 pt-6 border-t border-primary-foreground/10 flex items-center justify-center">
           <p className="text-sm text-primary-foreground/60">
-            © {currentYear} FS Realty. All rights reserved.
+            © {currentYear} Faisal Property. All rights reserved.
           </p>
         </div>
       </div>
