@@ -124,6 +124,7 @@ export interface Property {
     city: string;
     description: string;
     isActive: boolean;
+    videoUrls: Array<string>;
     listingType: ListingType;
     state: string;
     areaSqFt: bigint;
@@ -191,7 +192,7 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
-    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<bigint>;
+    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>, videoUrls: Array<string>): Promise<bigint>;
     deleteProperty(id: bigint): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -205,7 +206,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
-    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<void>;
+    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>, videoUrls: Array<string>): Promise<void>;
 }
 import type { ListingType as _ListingType, Principal as _Principal, Property as _Property, PropertyType as _PropertyType, StripeSessionStatus as _StripeSessionStatus, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -336,17 +337,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createProperty(arg0: string, arg1: string, arg2: bigint, arg3: string, arg4: string, arg5: string, arg6: PropertyType, arg7: ListingType, arg8: bigint, arg9: bigint, arg10: bigint, arg11: string, arg12: string, arg13: Array<string>): Promise<bigint> {
+    async createProperty(arg0: string, arg1: string, arg2: bigint, arg3: string, arg4: string, arg5: string, arg6: PropertyType, arg7: ListingType, arg8: bigint, arg9: bigint, arg10: bigint, arg11: string, arg12: string, arg13: Array<string>, arg14: Array<string>): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.createProperty(arg0, arg1, arg2, arg3, arg4, arg5, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg6), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg7), arg8, arg9, arg10, arg11, arg12, arg13);
+                const result = await this.actor.createProperty(arg0, arg1, arg2, arg3, arg4, arg5, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg6), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg7), arg8, arg9, arg10, arg11, arg12, arg13, arg14);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createProperty(arg0, arg1, arg2, arg3, arg4, arg5, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg6), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg7), arg8, arg9, arg10, arg11, arg12, arg13);
+            const result = await this.actor.createProperty(arg0, arg1, arg2, arg3, arg4, arg5, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg6), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg7), arg8, arg9, arg10, arg11, arg12, arg13, arg14);
             return result;
         }
     }
@@ -532,17 +533,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async updateProperty(arg0: bigint, arg1: string, arg2: string, arg3: bigint, arg4: string, arg5: string, arg6: string, arg7: PropertyType, arg8: ListingType, arg9: bigint, arg10: bigint, arg11: bigint, arg12: string, arg13: string, arg14: Array<string>): Promise<void> {
+    async updateProperty(arg0: bigint, arg1: string, arg2: string, arg3: bigint, arg4: string, arg5: string, arg6: string, arg7: PropertyType, arg8: ListingType, arg9: bigint, arg10: bigint, arg11: bigint, arg12: string, arg13: string, arg14: Array<string>, arg15: Array<string>): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateProperty(arg0, arg1, arg2, arg3, arg4, arg5, arg6, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg7), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg8), arg9, arg10, arg11, arg12, arg13, arg14);
+                const result = await this.actor.updateProperty(arg0, arg1, arg2, arg3, arg4, arg5, arg6, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg7), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg8), arg9, arg10, arg11, arg12, arg13, arg14, arg15);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateProperty(arg0, arg1, arg2, arg3, arg4, arg5, arg6, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg7), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg8), arg9, arg10, arg11, arg12, arg13, arg14);
+            const result = await this.actor.updateProperty(arg0, arg1, arg2, arg3, arg4, arg5, arg6, to_candid_PropertyType_n10(this._uploadFile, this._downloadFile, arg7), to_candid_ListingType_n12(this._uploadFile, this._downloadFile, arg8), arg9, arg10, arg11, arg12, arg13, arg14, arg15);
             return result;
         }
     }
@@ -592,6 +593,7 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
     city: string;
     description: string;
     isActive: boolean;
+    videoUrls: Array<string>;
     listingType: _ListingType;
     state: string;
     areaSqFt: bigint;
@@ -611,6 +613,7 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
     city: string;
     description: string;
     isActive: boolean;
+    videoUrls: Array<string>;
     listingType: ListingType;
     state: string;
     areaSqFt: bigint;
@@ -631,6 +634,7 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
         city: value.city,
         description: value.description,
         isActive: value.isActive,
+        videoUrls: value.videoUrls,
         listingType: from_candid_ListingType_n22(_uploadFile, _downloadFile, value.listingType),
         state: value.state,
         areaSqFt: value.areaSqFt,

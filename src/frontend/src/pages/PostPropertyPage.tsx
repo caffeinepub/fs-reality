@@ -17,17 +17,21 @@ import {
   Building2,
   Check,
   CreditCard,
+  Gift,
   IndianRupee,
   Loader2,
   SkipForward,
   Sparkles,
+  X,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListingType, type PropertyType } from "../backend.d";
 import PhotoUploader from "../components/PhotoUploader";
+import VideoUploader from "../components/VideoUploader";
 import { useCreateCheckoutSession } from "../hooks/useCheckout";
+import { useFreeTrial } from "../hooks/useFreeTrial";
 import { useCreateProperty } from "../hooks/useQueries";
 import {
   INDIAN_CITIES,
@@ -50,6 +54,7 @@ interface FormData {
   contactName: string;
   contactPhone: string;
   photoUrls: string[];
+  videoUrls: string[];
 }
 
 interface FormErrors {
@@ -61,6 +66,7 @@ export default function PostPropertyPage() {
   const { mutateAsync: createProperty, isPending } = useCreateProperty();
   const { mutateAsync: createCheckoutSession, isPending: isCheckoutPending } =
     useCreateCheckoutSession();
+  const { isTrialActive, daysRemaining, hoursRemaining } = useFreeTrial();
 
   const [form, setForm] = useState<FormData>({
     title: "",
@@ -77,6 +83,7 @@ export default function PostPropertyPage() {
     contactName: "",
     contactPhone: "",
     photoUrls: [],
+    videoUrls: [],
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -84,6 +91,7 @@ export default function PostPropertyPage() {
     null,
   );
   const [showPayment, setShowPayment] = useState(false);
+  const [trialBannerDismissed, setTrialBannerDismissed] = useState(false);
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -161,8 +169,14 @@ export default function PostPropertyPage() {
         contactName: form.contactName,
         contactPhone: form.contactPhone,
         photoUrls: form.photoUrls,
+        videoUrls: form.videoUrls,
       });
       setCreatedPropertyId(id);
+      if (isTrialActive) {
+        toast.success("Property published free during your trial!");
+        router.navigate({ to: `/property/${id}` } as never);
+        return;
+      }
       setShowPayment(true);
       toast.success("Property saved! Complete payment to publish.");
     } catch (err) {
@@ -222,110 +236,208 @@ export default function PostPropertyPage() {
               Property saved
             </span>
             <div className="w-8 h-0.5 bg-border" />
-            <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center ring-2 ring-brand">
-              <CreditCard className="w-5 h-5 text-brand" />
-            </div>
-            <span className="text-sm font-semibold text-foreground">
-              Pay to publish
-            </span>
+            {isTrialActive ? (
+              <>
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center ring-2 ring-emerald-500">
+                  <Gift className="w-5 h-5 text-emerald-600" />
+                </div>
+                <span className="text-sm font-semibold text-foreground">
+                  Publish free
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center ring-2 ring-brand">
+                  <CreditCard className="w-5 h-5 text-brand" />
+                </div>
+                <span className="text-sm font-semibold text-foreground">
+                  Pay to publish
+                </span>
+              </>
+            )}
           </div>
 
-          {/* Payment card */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
-            {/* Banner */}
-            <div className="bg-brand px-6 py-5 relative overflow-hidden">
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)",
-                }}
-              />
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <p className="text-white/80 text-sm font-medium mb-1">
-                    Listing Fee
-                  </p>
-                  <p className="text-white font-heading font-extrabold text-3xl tracking-tight">
-                    ₹999
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-5 space-y-4">
-              <div>
-                <h2 className="font-heading text-xl font-extrabold text-foreground mb-1">
-                  Pay to Publish Your Property
-                </h2>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Your property details have been saved. Complete the one-time
-                  listing fee to make it live and visible to potential buyers
-                  and renters.
-                </p>
-              </div>
-
-              <Separator />
-
-              {/* What you get */}
-              <ul className="space-y-2">
-                {[
-                  "Listing live for 90 days",
-                  "Visible to thousands of buyers & renters",
-                  "Direct contact from interested parties",
-                  "Featured on search results",
-                ].map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-center gap-2 text-sm text-foreground"
-                  >
-                    <div className="w-4 h-4 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                      <Check className="w-2.5 h-2.5 text-brand" />
+          {isTrialActive ? (
+            /* Free Trial Card */
+            <div
+              className="bg-card border-2 border-emerald-400 rounded-2xl overflow-hidden shadow-lg"
+              data-ocid="payment.free_trial_card"
+            >
+              {/* Trial Banner */}
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 relative overflow-hidden">
+                <div
+                  className="absolute inset-0 opacity-20"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at 80% 50%, white 0%, transparent 55%)",
+                  }}
+                />
+                <div className="relative flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-white font-heading font-extrabold text-2xl tracking-tight">
+                        Free Trial Active
+                      </span>
+                      <span className="bg-white/25 text-white text-xs font-bold px-2 py-0.5 rounded-full border border-white/30">
+                        Limited Time Offer
+                      </span>
                     </div>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+                    <p className="text-white/85 text-sm font-medium">
+                      {daysRemaining > 0
+                        ? `${daysRemaining}d ${hoursRemaining}h remaining in your free trial`
+                        : `${hoursRemaining}h remaining in your free trial`}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Gift className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
 
-              <Separator />
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <h2 className="font-heading text-xl font-extrabold text-foreground mb-1">
+                    Publish Your Property — It's Free!
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    You're in your 3-day free trial period. Publish your
+                    property listing right now at no cost.
+                  </p>
+                </div>
 
-              <div className="space-y-3 pt-1">
+                <Separator />
+
+                <ul className="space-y-2">
+                  {[
+                    "Listing live for 90 days",
+                    "Visible to thousands of buyers & renters",
+                    "Direct contact from interested parties",
+                    "Featured on search results",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-emerald-600" />
+                      </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Separator />
+
                 <Button
-                  data-ocid="payment.pay_button"
-                  onClick={handlePayNow}
-                  disabled={isCheckoutPending}
-                  className="w-full bg-brand hover:bg-brand-dark text-white font-semibold h-12 text-base shadow-brand gap-2"
-                >
-                  {isCheckoutPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Redirecting to payment...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4" />
-                      Pay ₹999 &amp; Publish Now
-                    </>
-                  )}
-                </Button>
-                <Button
-                  data-ocid="payment.skip_button"
-                  variant="ghost"
+                  data-ocid="payment.publish_free_button"
                   onClick={handleSkipPayment}
-                  className="w-full gap-2 text-muted-foreground hover:text-foreground"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold h-12 text-base gap-2 shadow-sm"
                 >
-                  <SkipForward className="w-4 h-4" />
-                  Skip Payment (Demo)
+                  <Sparkles className="w-4 h-4" />
+                  Publish for Free
                 </Button>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Standard Payment Card */
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+              {/* Banner */}
+              <div className="bg-brand px-6 py-5 relative overflow-hidden">
+                <div
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)",
+                  }}
+                />
+                <div className="relative flex items-center justify-between">
+                  <div>
+                    <p className="text-white/80 text-sm font-medium mb-1">
+                      Listing Fee
+                    </p>
+                    <p className="text-white font-heading font-extrabold text-3xl tracking-tight">
+                      ₹999
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <h2 className="font-heading text-xl font-extrabold text-foreground mb-1">
+                    Pay to Publish Your Property
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Your property details have been saved. Complete the one-time
+                    listing fee to make it live and visible to potential buyers
+                    and renters.
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* What you get */}
+                <ul className="space-y-2">
+                  {[
+                    "Listing live for 90 days",
+                    "Visible to thousands of buyers & renters",
+                    "Direct contact from interested parties",
+                    "Featured on search results",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <div className="w-4 h-4 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-brand" />
+                      </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Separator />
+
+                <div className="space-y-3 pt-1">
+                  <Button
+                    data-ocid="payment.pay_button"
+                    onClick={handlePayNow}
+                    disabled={isCheckoutPending}
+                    className="w-full bg-brand hover:bg-brand-dark text-white font-semibold h-12 text-base shadow-brand gap-2"
+                  >
+                    {isCheckoutPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Redirecting to payment...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4" />
+                        Pay ₹999 &amp; Publish Now
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    data-ocid="payment.skip_button"
+                    variant="ghost"
+                    onClick={handleSkipPayment}
+                    className="w-full gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                    Skip Payment (Demo)
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <p className="text-center text-xs text-muted-foreground">
-            Secured by Stripe · 256-bit SSL encryption
+            {isTrialActive
+              ? "Free trial valid for 3 days from your first visit"
+              : "Secured by Stripe · 256-bit SSL encryption"}
           </p>
         </motion.div>
       </div>
@@ -334,6 +446,43 @@ export default function PostPropertyPage() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl">
+      {/* Free Trial Banner */}
+      <AnimatePresence>
+        {isTrialActive && !trialBannerDismissed && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                  <Gift className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-emerald-800 text-sm font-semibold truncate">
+                  Free Trial Active — Post listings for free.{" "}
+                  <span className="font-normal text-emerald-700">
+                    {daysRemaining > 0
+                      ? `${daysRemaining}d ${hoursRemaining}h remaining`
+                      : `${hoursRemaining}h remaining`}
+                  </span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTrialBannerDismissed(true)}
+                className="shrink-0 text-emerald-500 hover:text-emerald-700 transition-colors"
+                aria-label="Dismiss trial banner"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -686,6 +835,25 @@ export default function PostPropertyPage() {
               initialUrls={[]}
               onChange={(urls) => updateField("photoUrls", urls)}
               maxPhotos={10}
+              disabled={isPending}
+            />
+          </section>
+
+          {/* Videos */}
+          <section className="bg-card border border-border rounded-2xl p-6 space-y-5">
+            <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
+              <Badge className="bg-brand text-white rounded-full w-6 h-6 flex items-center justify-center p-0 text-xs">
+                6
+              </Badge>
+              Property Videos
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                (optional)
+              </span>
+            </h2>
+            <VideoUploader
+              initialUrls={[]}
+              onChange={(urls) => updateField("videoUrls", urls)}
+              maxVideos={3}
               disabled={isPending}
             />
           </section>

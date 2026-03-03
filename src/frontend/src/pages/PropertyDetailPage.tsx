@@ -16,6 +16,7 @@ import {
   Phone,
   Share2,
   User,
+  Video,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -52,6 +53,7 @@ interface DisplayProperty {
   contactPhone: string;
   image?: string;
   photoUrls?: string[];
+  videoUrls?: string[];
   postedAt?: bigint | number;
   isActive?: boolean;
 }
@@ -290,6 +292,38 @@ export default function PropertyDetailPage() {
                   className="w-full h-full object-cover"
                 />
               </button>
+            ))}
+          </div>
+        )}
+
+        {/* Property Videos */}
+        {displayProperty.videoUrls && displayProperty.videoUrls.length > 0 && (
+          <div className="space-y-3 pt-2">
+            <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
+              <Video className="w-4 h-4 text-brand" />
+              Property Videos
+            </h3>
+            {displayProperty.videoUrls.map((videoUrl, idx) => (
+              <div
+                key={videoUrl}
+                className="bg-card border border-border rounded-xl overflow-hidden shadow-card"
+              >
+                {displayProperty.videoUrls!.length > 1 && (
+                  <div className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Video className="w-3.5 h-3.5 text-brand" />
+                    Video {idx + 1}
+                  </div>
+                )}
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full rounded-xl"
+                  preload="metadata"
+                  aria-label={`Property video ${idx + 1}`}
+                >
+                  <track kind="captions" />
+                </video>
+              </div>
             ))}
           </div>
         )}

@@ -35,6 +35,7 @@ export interface Property {
     city: string;
     description: string;
     isActive: boolean;
+    videoUrls: Array<string>;
     listingType: ListingType;
     state: string;
     areaSqFt: bigint;
@@ -91,7 +92,7 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
-    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<bigint>;
+    createProperty(title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>, videoUrls: Array<string>): Promise<bigint>;
     deleteProperty(id: bigint): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -105,5 +106,5 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
-    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>): Promise<void>;
+    updateProperty(id: bigint, title: string, description: string, price: bigint, location: string, city: string, state: string, propertyType: PropertyType, listingType: ListingType, bedrooms: bigint, bathrooms: bigint, areaSqFt: bigint, contactName: string, contactPhone: string, photoUrls: Array<string>, videoUrls: Array<string>): Promise<void>;
 }

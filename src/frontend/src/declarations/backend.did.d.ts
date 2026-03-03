@@ -25,6 +25,7 @@ export interface Property {
   'city' : string,
   'description' : string,
   'isActive' : boolean,
+  'videoUrls' : Array<string>,
   'listingType' : ListingType,
   'state' : string,
   'areaSqFt' : bigint,
@@ -121,6 +122,7 @@ export interface _SERVICE {
       string,
       string,
       Array<string>,
+      Array<string>,
     ],
     bigint
   >,
@@ -164,6 +166,7 @@ export interface _SERVICE {
       bigint,
       string,
       string,
+      Array<string>,
       Array<string>,
     ],
     undefined

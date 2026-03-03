@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import {
@@ -9,6 +8,7 @@ import {
   Briefcase,
   Building2,
   ChevronRight,
+  Gift,
   Home,
   Layers,
   MapPin,
@@ -20,6 +20,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { ListingType, PropertyType } from "../backend.d";
 import PropertyCard from "../components/PropertyCard";
+import { useFreeTrial } from "../hooks/useFreeTrial";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { INDIAN_CITIES, SAMPLE_PROPERTIES } from "../utils/constants";
 
@@ -52,6 +53,7 @@ export default function HomePage() {
   const router = useRouter();
   const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity;
+  const { isTrialActive, daysRemaining, hoursRemaining } = useFreeTrial();
 
   function handleSearch() {
     const params: Record<string, string> = {};
@@ -105,6 +107,29 @@ export default function HomePage() {
               Browse over 2.5 lakh listings across 50+ cities. Verified
               properties, transparent pricing, and expert guidance.
             </p>
+
+            {/* Free Trial Badge */}
+            {isTrialActive && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.4, type: "spring" }}
+                className="mb-5"
+              >
+                <div
+                  data-ocid="home.free_trial_badge"
+                  className="inline-flex items-center gap-2 bg-emerald-500/90 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg border border-emerald-400/50"
+                >
+                  <Gift className="w-4 h-4 shrink-0" />
+                  <span>3 Days Free Trial — No payment needed!</span>
+                  <span className="bg-white/25 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    {daysRemaining > 0
+                      ? `${daysRemaining}d ${hoursRemaining}h left`
+                      : `${hoursRemaining}h left`}
+                  </span>
+                </div>
+              </motion.div>
+            )}
 
             {/* Search Box */}
             <div className="bg-white rounded-2xl p-2 shadow-2xl max-w-2xl">

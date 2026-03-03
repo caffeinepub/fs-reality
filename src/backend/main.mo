@@ -15,6 +15,7 @@ import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import Migration "migration";
 
+
 (with migration = Migration.run)
 actor {
   include MixinStorage();
@@ -47,6 +48,7 @@ actor {
     contactName : Text;
     contactPhone : Text;
     photoUrls : [Text];
+    videoUrls : [Text];
     postedBy : Principal.Principal;
     postedAt : Time.Time;
     isActive : Bool;
@@ -92,6 +94,9 @@ actor {
   };
 
   public shared ({ caller }) func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can check session status");
+    };
     await Stripe.getSessionStatus(getStripeConfiguration(), sessionId, transform);
   };
 
@@ -135,6 +140,7 @@ actor {
     contactName : Text,
     contactPhone : Text,
     photoUrls : [Text],
+    videoUrls : [Text],
   ) : async Nat {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create properties");
@@ -156,6 +162,7 @@ actor {
       contactName;
       contactPhone;
       photoUrls;
+      videoUrls;
       postedBy = caller;
       postedAt = Time.now();
       isActive = true;
@@ -233,6 +240,7 @@ actor {
     contactName : Text,
     contactPhone : Text,
     photoUrls : [Text],
+    videoUrls : [Text],
   ) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update properties");
@@ -259,6 +267,7 @@ actor {
           contactName;
           contactPhone;
           photoUrls;
+          videoUrls;
           postedBy = caller;
           postedAt = existing.postedAt;
           isActive = existing.isActive;
@@ -297,6 +306,7 @@ actor {
           contactName = existing.contactName;
           contactPhone = existing.contactPhone;
           photoUrls = existing.photoUrls;
+          videoUrls = existing.videoUrls;
           isActive = false;
         };
         properties.add(id, updated);

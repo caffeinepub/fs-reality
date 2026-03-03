@@ -34,6 +34,7 @@ export interface CreatePropertyInput {
   contactName: string;
   contactPhone: string;
   photoUrls: Array<string>;
+  videoUrls: Array<string>;
 }
 
 // ─── Get All Properties with Filters ───
@@ -105,6 +106,7 @@ export function useCreateProperty() {
         input.contactName,
         input.contactPhone,
         input.photoUrls,
+        input.videoUrls,
       );
     },
     onSuccess: () => {
@@ -140,6 +142,7 @@ export function useUpdateProperty() {
         input.contactName,
         input.contactPhone,
         input.photoUrls,
+        input.videoUrls,
       );
     },
     onSuccess: (_, { id }) => {

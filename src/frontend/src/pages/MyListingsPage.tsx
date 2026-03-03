@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { ListingType, PropertyType } from "../backend.d";
 import type { Property } from "../backend.d";
 import PhotoUploader from "../components/PhotoUploader";
+import VideoUploader from "../components/VideoUploader";
 import {
   useDeleteProperty,
   useGetMyProperties,
@@ -74,6 +75,7 @@ interface EditFormData {
   contactName: string;
   contactPhone: string;
   photoUrls: string[];
+  videoUrls: string[];
 }
 
 export default function MyListingsPage() {
@@ -104,6 +106,7 @@ export default function MyListingsPage() {
       contactName: property.contactName,
       contactPhone: property.contactPhone,
       photoUrls: normalizePhotoUrls(property.photoUrls),
+      videoUrls: property.videoUrls ?? [],
     });
   }
 
@@ -139,6 +142,7 @@ export default function MyListingsPage() {
           contactName: editForm.contactName,
           contactPhone: editForm.contactPhone,
           photoUrls: editForm.photoUrls,
+          videoUrls: editForm.videoUrls,
         },
       });
       toast.success("Property updated successfully.");
@@ -591,6 +595,23 @@ export default function MyListingsPage() {
                   initialUrls={editForm.photoUrls}
                   onChange={(urls) => updateEditField("photoUrls", urls)}
                   maxPhotos={10}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              {/* Video Management */}
+              <div className="space-y-2">
+                <Label className="font-semibold">
+                  Property Videos
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    (optional)
+                  </span>
+                </Label>
+                <VideoUploader
+                  key={`video-${editProperty?.id?.toString()}`}
+                  initialUrls={editForm.videoUrls}
+                  onChange={(urls) => updateEditField("videoUrls", urls)}
+                  maxVideos={3}
                   disabled={isUpdating}
                 />
               </div>
