@@ -192,7 +192,7 @@ export default function PostPropertyPage() {
           </h1>
         </div>
         <p className="text-muted-foreground ml-[3.25rem]">
-          Fill in the details below to list your property on FS Reality.
+          Fill in the details below to list your property on FS Realty.
         </p>
       </div>
 

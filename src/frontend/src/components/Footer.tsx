@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Building2, Heart, Mail, MapPin, Phone } from "lucide-react";
+import { Building2, Mail, MapPin, Phone } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
-  const caffeineUrl = `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`;
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -16,7 +15,7 @@ export default function Footer() {
                 <Building2 className="w-4 h-4 text-white" />
               </div>
               <span className="font-heading font-extrabold text-xl tracking-tight">
-                FS <span className="text-brand">Reality</span>
+                FS <span className="text-brand">Realty</span>
               </span>
             </div>
             <p className="text-sm text-primary-foreground/70 leading-relaxed">
@@ -101,21 +100,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-primary-foreground/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 pt-6 border-t border-primary-foreground/10 flex items-center justify-center">
           <p className="text-sm text-primary-foreground/60">
-            © {currentYear} FS Reality. All rights reserved.
-          </p>
-          <p className="text-sm text-primary-foreground/60 flex items-center gap-1.5">
-            Built with <Heart className="w-3.5 h-3.5 text-brand fill-current" />{" "}
-            using{" "}
-            <a
-              href={caffeineUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand hover:underline"
-            >
-              caffeine.ai
-            </a>
+            © {currentYear} FS Realty. All rights reserved.
           </p>
         </div>
       </div>

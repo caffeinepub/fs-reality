@@ -270,7 +270,7 @@ export default function HomePage() {
                 Post for Free
               </Badge>
               <h2 className="font-heading text-3xl font-extrabold text-primary-foreground mb-3">
-                Own a Property? List it on FS Reality
+                Own a Property? List it on FS Realty
               </h2>
               <p className="text-primary-foreground/70 mb-8 max-w-md mx-auto">
                 Reach thousands of serious buyers and tenants. Post your
@@ -291,7 +291,7 @@ export default function HomePage() {
       <section className="py-16 container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-heading text-3xl font-extrabold text-foreground">
-            Why FS Reality?
+            Why FS Realty?
           </h2>
           <p className="text-muted-foreground mt-2">
             Trusted by over 1 lakh families across India

@@ -351,7 +351,7 @@ export default function PropertyDetailPage() {
             </a>
 
             <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
-              Mention FS Reality when contacting for better response.
+              Mention FS Realty when contacting for better response.
             </p>
 
             <Separator className="my-4" />

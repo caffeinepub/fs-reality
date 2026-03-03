@@ -41,7 +41,7 @@ export default function Navbar() {
             <Building2 className="w-4 h-4 text-white" />
           </div>
           <span className="font-heading font-extrabold text-xl tracking-tight text-foreground">
-            FS <span className="text-brand">Reality</span>
+            FS <span className="text-brand">Realty</span>
           </span>
         </Link>
 
